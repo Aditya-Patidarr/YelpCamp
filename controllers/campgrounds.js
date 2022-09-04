@@ -20,11 +20,11 @@ module.exports.createCampground = async(req,res,next)=>{
             limit:1
         }).send();
         const campground = new Campground(req.body.campground);
-        campground.geometry = geoData.body.features[0].geometry
-        campground.images = await req.files.map(f=>({url:f.path,filename:f.filename}));
+        campground.geometry = geoData.body.features[0].geometry;
+        campground.images = req.files.map(f=>({url:f.path,filename:f.filename}));
         campground.author = req.user._id;
         await campground.save();
-        req.flash('success','Successfully created a new farm!');
+        req.flash('success','Successfully created a new campground!');
         res.redirect(`/campgrounds/${campground._id}`);
 }
 
@@ -55,21 +55,22 @@ module.exports.renderEditForm = async(req,res)=>{
 module.exports.updateCampground = async (req,res)=>{
     const {id} = req.params ;
     const campground = await Campground.findByIdAndUpdate(id,{...req.body.campground});
-    const imgs = await req.files.map(f=>({url:f.path,filename:f.filename})) ;
+    const imgs = req.files.map(f=>({url:f.path,filename:f.filename})) ;
     campground.images.push(...imgs);
     await campground.save();
     if(req.body.deleteImages){
        for(let filename of req.body.deleteImages){
-        cloudinary.uploader.destroy(filename);
+        await cloudinary.uploader.destroy(filename);
     }
     await campground.updateOne({ $pull: {images : { filename : { $in: req.body.deleteImages}}}});
     }
-    req.flash('success','Successfully Updated farm!');
+    req.flash('success','Successfully Updated Campground!');
     res.redirect(`/campgrounds/${campground._id}`)
 }
 
 module.exports.deleteCampground = async(req,res)=>{
     const {id} = req.params;
     await Campground.findByIdAndDelete(id);
+    req.flash('success','Successfully deleted campground')
     res.redirect('/campgrounds');
 }
