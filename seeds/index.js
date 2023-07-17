@@ -1,12 +1,17 @@
+if(process.env.NODE_ENV!=="production"){
+  require('dotenv').config();
+}
+
 const mongoose = require('mongoose');
 const cities = require('./cities');
 const {places,descriptors} = require('./seedHelpers');
 const Campground = require('../models/campground');
 const Review = require('../models/review');
 const axios = require('axios');
+const images = require('./images');
+const dbUrl = process.env.DB_URL ;
 
-
-mongoose.connect('mongodb://localhost:27017/yelp-camp',{
+mongoose.connect(dbUrl,{
     useNewUrlParser:true,
     useUnifiedTopology:true
 });
@@ -36,12 +41,14 @@ async function seedImg() {
 const seedDB = async ()=>{
     await Campground.deleteMany({});
     await Review.deleteMany({});
-    for(let i=0;i<50;i++){
+    for(let i=0;i<20;i++){
     const random1000 = Math.floor(Math.random()*1000);
+    const randombyfour = random1000%4 ;
     const price = Math.floor(Math.random()*20)+10;
     const camp = new Campground
     ({
-    author:'63090ef3708bd65e9af4750e',
+    
+      author:process.env.SEEDER,
     location:`${cities[random1000].city},${cities[random1000].state}`,
     title:`${sample(descriptors)} ${sample(places)}`,
     geometry:{
@@ -49,19 +56,14 @@ const seedDB = async ()=>{
       coordinates: [
         cities[random1000].longitude,
         cities[random1000].latitude
+    
       ]
     },
+    
     // image:await seedImg(),
     images:[
-      {
-        url: 'https://res.cloudinary.com/dfvtfmanm/image/upload/v1661870039/YelpCamp/yq51ws9nyxtk3z3hj5he.jpg',
-        filename: 'YelpCamp/yq51ws9nyxtk3z3hj5he',
-      },
-      {
-        url: 'https://res.cloudinary.com/dfvtfmanm/image/upload/v1661870040/YelpCamp/o5bp8ulikfnianhagp76.jpg',
-        filename: 'YelpCamp/o5bp8ulikfnianhagp76',
-      }
-  
+      images[randombyfour],
+      images[(randombyfour+1)%4],
     ],
     description:'Lorem ipsum dolor sit amet consectetur adipisicing elit. Dignissimos corrupti veritatis dolor eos vero delectus minima consectetur neque? Similique omnis dolor eos quibusdam placeat sunt unde nulla hic fugiat ullam!',
     price
